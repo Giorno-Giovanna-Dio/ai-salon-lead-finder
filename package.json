@@ -1,0 +1,30 @@
+{
+  "name": "ai-salon-lead-finder",
+  "version": "1.0.0",
+  "description": "AI-powered B2B lead finder for beauty salon industry - 2026 Best AI Awards",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/crawler/index.ts",
+    "dashboard": "cd src/dashboard && npm run dev",
+    "build": "tsc",
+    "test": "echo \"Tests coming soon\""
+  },
+  "keywords": [
+    "ai",
+    "b2b",
+    "lead-generation",
+    "instagram",
+    "llm",
+    "openclaw",
+    "beauty-industry"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "openai": "^4.70.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  }
+}
