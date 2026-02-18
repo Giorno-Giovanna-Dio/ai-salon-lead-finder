@@ -191,7 +191,7 @@ Browser AI 搜尋 → LLM 分析 → 個性化 DM → 半自動發送
 - 聯絡人: 王小姐
 - Email: jeannie_wang@mail.tca.org.tw
 
-**報名網址**: https://[競賽官網]
+
 
 ---
 

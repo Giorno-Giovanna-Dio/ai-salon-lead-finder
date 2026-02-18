@@ -7,6 +7,9 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Build outputs
 dist/
@@ -20,23 +23,44 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # OS
 .DS_Store
 Thumbs.db
-
-# IDE
-.vscode/
-.idea/
 *.swp
 *.swo
 *~
 
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
 # Testing
 coverage/
 .nyc_output/
+.turbo
 
 # Misc
 *.tgz
 *.zip
 .cache/
+
+# Documentation (not for upload)
+docs-for-comp-no-upload-to-github/
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal
+prisma/*.db
+prisma/*.db-journal
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

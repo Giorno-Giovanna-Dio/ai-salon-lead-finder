@@ -1,0 +1,230 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 搜尋任務配置
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String
+  hashtags    String[] // Array of hashtags without #
+  minFollowers Int     @default(3000)
+  maxFollowers Int     @default(100000)
+  maxLeads    Int      @default(100)
+  isActive    Boolean  @default(true)
+  schedule    String?  // Cron expression for scheduling
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  leads       Lead[]
+
+  @@map("campaigns")
+}
+
+// Instagram 帳號管理
+model InstagramAccount {
+  id              String   @id @default(cuid())
+  username        String   @unique
+  browserProfile  String   @unique // account1, account2, account3, account4
+  status          AccountStatus @default(ACTIVE)
+  dailyLimit      Int      @default(100)
+  todaySent       Int      @default(0)
+  lastUsedAt      DateTime?
+  nextAvailableAt DateTime? // 下次可用時間（lastUsedAt + 6 hours）
+  sessionExpiry   DateTime? // 登入狀態過期時間
+  isLoggedIn      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  dmMessages      DmMessage[]
+  activityLogs    ActivityLog[]
+
+  @@map("instagram_accounts")
+}
+
+enum AccountStatus {
+  ACTIVE    // 正常運作
+  PAUSED    // 暫時停用
+  BLOCKED   // 被Instagram封鎖
+  COOLING   // 冷卻期（6小時內）
+}
+
+// 發現的潛在客戶
+model Lead {
+  id              String   @id @default(cuid())
+  username        String   @unique
+  fullName        String
+  biography       String   @default("")
+  followersCount  Int
+  postsCount      Int      @default(0)
+  score           Float    // 0-10
+  reasons         String[] // Array of reasons
+  isLikelyOwner   Boolean  @default(false)
+  status          LeadStatus @default(DISCOVERED)
+  profileUrl      String
+  profileImageUrl String?  // 從IG抓取的頭像URL
+  contactMethods  Json?    // {email?, phone?, line?, website?}
+  campaignId      String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  campaign        Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  dmMessages      DmMessage[]
+  responses       Response[]
+
+  @@index([campaignId])
+  @@index([status])
+  @@index([score])
+  @@map("leads")
+}
+
+enum LeadStatus {
+  DISCOVERED   // 剛發現
+  DM_PREPARED  // DM已準備
+  DM_SENT      // DM已發送
+  RESPONDED    // 客戶已回覆
+  CONVERTED    // 已成交
+}
+
+// 準備和已發送的訊息
+model DmMessage {
+  id          String   @id @default(cuid())
+  leadId      String
+  accountId   String?  // 使用哪個IG帳號發送
+  content     String   @db.Text // 文字內容，可編輯
+  style       DmStyle? // AI生成時的風格
+  imageUrls   String[] // Supabase Storage URLs
+  status      DmStatus @default(AI_GENERATED)
+  sentAt      DateTime?
+  sentBy      String?  // 發送帳號username
+  failureReason String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  account     InstagramAccount? @relation(fields: [accountId], references: [id])
+  images      DmImage[]
+  responses   Response[]
+
+  @@index([leadId])
+  @@index([accountId])
+  @@index([status])
+  @@map("dm_messages")
+}
+
+enum DmStyle {
+  PROFESSIONAL   // 專業風格
+  FRIENDLY       // 親切風格
+  VALUE_FOCUSED  // 價值導向
+}
+
+enum DmStatus {
+  AI_GENERATED  // AI剛生成
+  USER_EDITED   // 用戶已編輯
+  APPROVED      // 已確認發送
+  SENT          // 已發送
+  FAILED        // 發送失敗
+}
+
+// DM 圖片管理
+model DmImage {
+  id          String   @id @default(cuid())
+  messageId   String
+  storagePath String   // Supabase Storage路徑
+  publicUrl   String   // 公開訪問URL
+  fileName    String
+  fileSize    Int      // bytes
+  mimeType    String
+  uploadedAt  DateTime @default(now())
+
+  // Relations
+  message     DmMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("dm_images")
+}
+
+// Instagram 回應記錄
+model Response {
+  id             String   @id @default(cuid())
+  leadId         String
+  dmMessageId    String
+  messageContent String   @db.Text // 客戶的回覆內容
+  receivedAt     DateTime @default(now())
+  isPositive     Boolean  @default(false) // 是否有興趣 - LLM判斷
+  sentiment      Sentiment @default(NEEDS_REVIEW)
+  isProcessed    Boolean  @default(false) // 是否已處理
+  notes          String?  @db.Text // 跟進備註
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  lead           Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  dmMessage      DmMessage @relation(fields: [dmMessageId], references: [id])
+
+  @@index([leadId])
+  @@index([dmMessageId])
+  @@index([receivedAt])
+  @@index([isPositive])
+  @@map("responses")
+}
+
+enum Sentiment {
+  POSITIVE      // 正面
+  NEUTRAL       // 中立
+  NEGATIVE      // 負面
+  NEEDS_REVIEW  // 需要人工審查
+}
+
+// DM 範本庫
+model DmTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  content     String   @db.Text
+  style       DmStyle
+  category    String   @default("general") // 產品推廣/合作邀約/跟進等
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("dm_templates")
+}
+
+// 系統設定
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json     // 可儲存任何JSON格式的設定
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// 操作日誌（用於分析）
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String   // search, dm_sent, response_received, etc.
+  accountId String?  // 哪個IG帳號
+  metadata  Json?    // 詳細資訊
+  timestamp DateTime @default(now())
+
+  // Relations
+  account   InstagramAccount? @relation(fields: [accountId], references: [id])
+
+  @@index([accountId])
+  @@index([action])
+  @@index([timestamp])
+  @@map("activity_logs")
+}
