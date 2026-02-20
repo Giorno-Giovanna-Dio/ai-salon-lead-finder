@@ -18,7 +18,7 @@
 - ✅ 回應追蹤頁（每日目標進度）
 - ✅ 報表分析頁
 - ✅ 系統設定頁
-- ⏳ DM 編輯與發送 UI（待實作）
+- ⏳ DM 編輯與發送 UI（待實作，改為使用者上傳文案）
 
 ### 3. 核心服務 (85%)
 - ✅ AI 服務 (`src/lib/ai.ts`)
@@ -30,7 +30,7 @@
   - 6 小時間隔管理
   - 每日限制追蹤
 - ✅ DM 發送服務 (`src/lib/dm-service.ts`)
-  - AI 生成 3 種風格 DM
+  - 使用者上傳／貼上自己的文案（不需 AI 生成）
   - 圖片上傳到 Supabase Storage
   - 批次發送功能
 - ✅ Instagram Crawler (`src/crawler/instagram-crawler.ts`)
@@ -40,7 +40,7 @@
 
 ### 4. API Endpoints (100%)
 - ✅ `/api/campaigns/[id]/run` - 執行搜尋任務
-- ✅ `/api/leads/[id]/generate-dm` - 生成 DM
+- ✅ `/api/leads/[id]/dm` - 建立 DM（POST body: `{ content: string, style? }`，使用者上傳文案）
 - ✅ `/api/dm/[id]/send` - 發送 DM
 - ✅ `/api/accounts/stats` - 帳號統計
 
@@ -57,7 +57,7 @@
 
 ### Phase 1: 完善 Dashboard UI（預計 2-3 天）
 1. **DM 編輯界面**
-   - 3 種風格 DM 選擇
+   - 使用者上傳／貼上自己的文案（無需 AI 產生）
    - 文字編輯器
    - 多圖片上傳（最多 10 張）
    - DM 預覽
@@ -138,7 +138,7 @@
 3. 測試 API endpoints（Postman/Thunder Client）
 
 ### 本週目標
-1. 建立 DM 編輯 UI
+1. 建立 DM 編輯 UI（使用者上傳／貼上文案）
 2. 建立搜尋任務建立表單
 3. 開始 OpenClaw Instagram 登入整合
 
@@ -206,5 +206,18 @@
 
 ---
 
-**最後更新**: 2026-02-18
+---
+
+## 📅 Progress 紀錄
+
+### 02/18 Progress
+
+- **1. 資料庫架構** — 9 張資料表（Campaign, Lead, DmMessage, Response 等）、Supabase PostgreSQL 連線成功、Prisma ORM 完整設定
+- **2. Dashboard 前端** — 側邊欄導航 + Header、儀表板首頁（統計卡片、快速操作）、搜尋任務列表、潛在客戶列表 + 詳情頁、回應追蹤（每日目標進度）、報表分析、系統設定頁
+- **3. 核心服務邏輯** — AI 服務（Gemini）、4 帳號輪換管理（6 小時間隔）、DM 生成與發送服務、Instagram Crawler（AI 分析）、4 個 API endpoints
+- **4. 開發環境** — Next.js 15 運行在 http://localhost:3001、所有依賴安裝完成、環境變數設定完成
+
+---
+
+**最後更新**: 2026-02-20
 **項目狀態**: 🟢 開發中 (Core功能完成 85%)

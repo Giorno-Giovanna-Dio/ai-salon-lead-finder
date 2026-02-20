@@ -64,8 +64,8 @@ export class InstagramCrawler {
       // 更新活動日誌
       await db.activityLog.create({
         data: {
-          type: 'CAMPAIGN_STARTED',
-          details: {
+          action: 'CAMPAIGN_STARTED',
+          metadata: {
             campaignId: campaign.id,
             campaignName: campaign.name,
             hashtags: campaign.hashtags,
@@ -80,8 +80,8 @@ export class InstagramCrawler {
       
       await db.activityLog.create({
         data: {
-          type: 'ERROR',
-          details: {
+          action: 'ERROR',
+          metadata: {
             error: error.message,
             campaignId,
           },
@@ -156,8 +156,8 @@ export class InstagramCrawler {
       // 記錄活動
       await db.activityLog.create({
         data: {
-          type: 'LEAD_CREATED',
-          details: {
+          action: 'LEAD_CREATED',
+          metadata: {
             leadId: lead.id,
             username: profile.username,
             score: analysis.score,

@@ -80,7 +80,7 @@
 
 **為什麼需要？**
 - OpenClaw 需要運行 browser（Chrome/Chromium）
-- 需要長時間執行（可能超過 10 秒）
+- 需要長時間執行（可能超過 10 秒）s
 - 需要保持 4 個 browser profiles 的 sessions
 
 **選項比較：**

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getDmService } from '@/lib/dm-service';
+import { DmStyle } from '@prisma/client';
+
+const VALID_STYLES = ['PROFESSIONAL', 'FRIENDLY', 'VALUE_FOCUSED'] as const;
 
 export async function POST(
   request: NextRequest,
@@ -18,11 +21,18 @@ export async function POST(
       );
     }
 
-    const dmService = getDmService();
-    const messages = await dmService.generateDmMessages(lead);
-    const dmIds = await dmService.saveDmMessages(lead.id, messages);
+    const body = await request.json().catch(() => ({}));
+    const content = typeof body.content === 'string' ? body.content : '';
+    const styleInput = body.style;
 
-    // 更新 Lead 狀態
+    const style: DmStyle | undefined =
+      typeof styleInput === 'string' && VALID_STYLES.includes(styleInput as DmStyle)
+        ? (styleInput as DmStyle)
+        : undefined;
+
+    const dmService = getDmService();
+    const dmId = await dmService.createDmFromUserContent(lead.id, content, style);
+
     await db.lead.update({
       where: { id: lead.id },
       data: { status: 'DM_PREPARED' },
@@ -30,17 +40,12 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      data: {
-        dmIds,
-        messages,
-      },
+      data: { dmId },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message,
-      },
+      { success: false, error: message },
       { status: 500 }
     );
   }

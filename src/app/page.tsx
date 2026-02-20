@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { Users, Send, MessageCircle, TrendingUp } from 'lucide-react';
+import { Users, Send, MessageCircle, TrendingUp, Search } from 'lucide-react';
 
 async function getStats() {
   const [

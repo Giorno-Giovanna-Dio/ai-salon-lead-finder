@@ -169,8 +169,8 @@ async function main() {
   await Promise.all([
     prisma.activityLog.create({
       data: {
-        type: 'CAMPAIGN_STARTED',
-        details: {
+        action: 'CAMPAIGN_STARTED',
+        metadata: {
           campaignId: campaign.id,
           campaignName: campaign.name,
         },
@@ -178,8 +178,8 @@ async function main() {
     }),
     prisma.activityLog.create({
       data: {
-        type: 'LEAD_CREATED',
-        details: {
+        action: 'LEAD_CREATED',
+        metadata: {
           leadId: leads[0].id,
           username: leads[0].username,
           score: leads[0].score,

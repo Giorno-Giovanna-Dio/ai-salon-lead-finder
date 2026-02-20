@@ -12,25 +12,22 @@ export class AccountManager {
    */
   async getAvailableAccount(): Promise<InstagramAccount | null> {
     const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-    
-    const account = await db.instagramAccount.findFirst({
+
+    const accounts = await db.instagramAccount.findMany({
       where: {
         status: 'ACTIVE',
         isLoggedIn: true,
-        todaySent: {
-          lt: db.$queryRaw`COALESCE(daily_limit, 100)`,
-        },
         OR: [
           { lastUsedAt: null },
           { lastUsedAt: { lt: sixHoursAgo } },
         ],
       },
-      orderBy: [
-        { lastUsedAt: 'asc' }, // 最久沒使用的優先
-      ],
+      orderBy: { lastUsedAt: 'asc' },
     });
 
-    return account;
+    // 在應用層篩選：今日發送數 < 每日限制
+    const available = accounts.find((a) => a.todaySent < a.dailyLimit);
+    return available ?? null;
   }
 
   /**
@@ -115,14 +112,13 @@ export class AccountManager {
       where: {
         status: 'ACTIVE',
         isLoggedIn: true,
-        todaySent: {
-          lt: db.$queryRaw`COALESCE(daily_limit, 100)`,
-        },
       },
       orderBy: { lastUsedAt: 'asc' },
     });
 
-    if (accounts.length === 0) {
+    const available = accounts.filter((a) => a.todaySent < a.dailyLimit);
+
+    if (available.length === 0) {
       // 沒有可用帳號，檢查最早可用的時間
       const earliestAccount = await db.instagramAccount.findFirst({
         where: {
@@ -140,7 +136,7 @@ export class AccountManager {
       return null;
     }
 
-    const account = accounts[0];
+    const account = available[0];
     if (!account.lastUsedAt) {
       return new Date(); // 立即可用
     }

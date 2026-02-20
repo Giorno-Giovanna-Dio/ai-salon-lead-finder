@@ -94,6 +94,28 @@ ${campaignContext ? `- 活動背景: ${campaignContext}` : ''}
   }
 
   /**
+   * 依使用者上傳的文案建立一則 DM（不呼叫 AI）
+   */
+  async createDmFromUserContent(
+    leadId: string,
+    content: string,
+    style?: DmStyle
+  ): Promise<string> {
+    if (!content?.trim()) {
+      throw new Error('Content is required');
+    }
+    const dm = await db.dmMessage.create({
+      data: {
+        leadId,
+        content: content.trim(),
+        style: style ?? null,
+        status: 'USER_EDITED',
+      },
+    });
+    return dm.id;
+  }
+
+  /**
    * 上傳圖片到 Supabase Storage
    */
   async uploadImages(
@@ -204,8 +226,8 @@ ${campaignContext ? `- 活動背景: ${campaignContext}` : ''}
     // 記錄活動日誌
     await db.activityLog.create({
       data: {
-        type: 'DM_SENT',
-        details: {
+        action: 'DM_SENT',
+        metadata: {
           dmId: dm.id,
           leadId: dm.leadId,
           username: dm.lead.username,

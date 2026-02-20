@@ -42,7 +42,8 @@ export class AIService {
     if (geminiKey) {
       this.provider = 'gemini';
       this.gemini = new GoogleGenerativeAI(geminiKey);
-      this.model = config?.model || process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+      // 新用戶請用 gemini-2.5-flash（2.0-flash 已不開放）；若 404 可改 .env 的 GEMINI_MODEL
+      this.model = config?.model || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
     } else if (openaiKey) {
       this.provider = 'openai';
       this.openai = new OpenAI({ apiKey: openaiKey });
