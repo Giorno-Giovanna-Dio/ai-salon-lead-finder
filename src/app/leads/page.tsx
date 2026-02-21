@@ -68,7 +68,10 @@ export default async function LeadsPage() {
                 {leads.map((lead) => (
                   <tr key={lead.id} className="hover:bg-muted/30">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                      <Link
+                        href={`/leads/${lead.id}`}
+                        className="flex items-center gap-3 hover:opacity-90 transition-opacity"
+                      >
                         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-semibold">
                           {lead.username.charAt(0).toUpperCase()}
                         </div>
@@ -78,7 +81,7 @@ export default async function LeadsPage() {
                             {lead.fullName}
                           </p>
                         </div>
-                      </div>
+                      </Link>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">

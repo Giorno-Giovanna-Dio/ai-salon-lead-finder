@@ -1,7 +1,8 @@
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
-import { formatNumber } from '@/lib/utils';
-import { ExternalLink, Star, Users as UsersIcon, Image as ImageIcon } from 'lucide-react';
+import { formatNumber, formatDateTime } from '@/lib/utils';
+import { ExternalLink, Star, Image as ImageIcon } from 'lucide-react';
+import { DmSection } from '@/components/leads/dm-section';
 
 export default async function LeadDetailPage({
   params,
@@ -138,31 +139,10 @@ export default async function LeadDetailPage({
           {/* DM Section */}
           <div className="rounded-lg border bg-card p-6">
             <h3 className="text-lg font-semibold mb-4">發送 DM</h3>
-            
-            {lead.dmMessages.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">尚未生成 DM</p>
-                <button className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                  生成 AI DM
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  ✨ DM 編輯與發送功能開發中...
-                </p>
-                <div className="rounded-lg bg-muted p-4">
-                  <p className="text-sm font-medium mb-2">即將提供：</p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• 3 種風格的 AI 生成 DM</li>
-                    <li>• 文字編輯器</li>
-                    <li>• 多圖片上傳（最多 10 張）</li>
-                    <li>• DM 預覽</li>
-                    <li>• 一鍵發送</li>
-                  </ul>
-                </div>
-              </div>
-            )}
+            <p className="text-sm text-muted-foreground mb-4">
+              輸入您的文案建立 DM，建立後可於下方發送
+            </p>
+            <DmSection leadId={lead.id} dmMessages={lead.dmMessages} />
           </div>
 
           {/* Send History */}
@@ -189,7 +169,7 @@ export default async function LeadDetailPage({
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">
-                        {dm.content.substring(0, 100)}...
+                        {dm.content.length > 100 ? `${dm.content.substring(0, 100)}...` : dm.content}
                       </p>
                       {dm.images.length > 0 && (
                         <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
@@ -203,11 +183,14 @@ export default async function LeadDetailPage({
                         'rounded-full px-2 py-1 text-xs font-semibold',
                         dm.status === 'SENT' && 'bg-green-100 text-green-800',
                         dm.status === 'APPROVED' && 'bg-blue-100 text-blue-800',
-                        dm.status === 'AI_GENERATED' && 'bg-gray-100 text-gray-800'
+                        dm.status === 'USER_EDITED' && 'bg-amber-100 text-amber-800',
+                        (dm.status === 'AI_GENERATED' || dm.status === 'FAILED') && 'bg-gray-100 text-gray-800'
                       )}>
                         {dm.status === 'SENT' && '已發送'}
                         {dm.status === 'APPROVED' && '已確認'}
+                        {dm.status === 'USER_EDITED' && '自訂文案'}
                         {dm.status === 'AI_GENERATED' && 'AI生成'}
+                        {dm.status === 'FAILED' && '發送失敗'}
                       </span>
                     </div>
                   </div>

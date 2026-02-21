@@ -8,17 +8,19 @@
 - ✅ Supabase PostgreSQL 連線成功
 - ✅ 資料庫推送完成
 
-### 2. Dashboard 前端 (90%)
+### 2. Dashboard 前端 (95%)
 - ✅ 側邊欄導航
 - ✅ 頂部 Header
 - ✅ 儀表板首頁（統計卡片）
 - ✅ 搜尋任務列表頁
+- ✅ 搜尋任務建立表單（/campaigns/new）+ 任務詳情頁（/campaigns/[id]）
 - ✅ 潛在客戶列表頁
 - ✅ 客戶詳情頁
+- ✅ DM 編輯與發送 UI（使用者上傳文案、風格選擇、預覽、建立 DM、發送按鈕）
 - ✅ 回應追蹤頁（每日目標進度）
 - ✅ 報表分析頁
 - ✅ 系統設定頁
-- ⏳ DM 編輯與發送 UI（待實作，改為使用者上傳文案）
+- ⏳ 多圖片上傳（最多 10 張）— 即將支援
 
 ### 3. 核心服務 (85%)
 - ✅ AI 服務 (`src/lib/ai.ts`)
@@ -39,10 +41,11 @@
   - ⏳ OpenClaw 整合（待實作）
 
 ### 4. API Endpoints (100%)
-- ✅ `/api/campaigns/[id]/run` - 執行搜尋任務
-- ✅ `/api/leads/[id]/dm` - 建立 DM（POST body: `{ content: string, style? }`，使用者上傳文案）
-- ✅ `/api/dm/[id]/send` - 發送 DM
-- ✅ `/api/accounts/stats` - 帳號統計
+- ✅ `POST /api/campaigns` - 建立搜尋任務
+- ✅ `POST /api/campaigns/[id]/run` - 執行搜尋任務
+- ✅ `POST /api/leads/[id]/dm` - 建立 DM（body: `{ content, style? }`，使用者上傳文案）
+- ✅ `POST /api/dm/[id]/send` - 發送 DM
+- ✅ `GET /api/accounts/stats` - 帳號統計
 
 ### 5. 基礎設施 (100%)
 - ✅ Next.js 15 + TypeScript
@@ -55,22 +58,10 @@
 
 ## 🚧 待實作功能
 
-### Phase 1: 完善 Dashboard UI（預計 2-3 天）
-1. **DM 編輯界面**
-   - 使用者上傳／貼上自己的文案（無需 AI 產生）
-   - 文字編輯器
-   - 多圖片上傳（最多 10 張）
-   - DM 預覽
-   
-2. **搜尋任務建立表單**
-   - Hashtags 輸入
-   - 粉絲數範圍設定
-   - 任務排程設定
-
-3. **互動優化**
-   - 載入狀態
-   - 成功/錯誤提示
-   - 確認對話框
+### Phase 1: 完善 Dashboard UI — ✅ 已完成
+1. **DM 編輯界面** — ✅ 文案輸入、風格選擇、預覽、建立 DM、發送按鈕（多圖上傳待支援）
+2. **搜尋任務建立表單** — ✅ /campaigns/new（名稱、Hashtags、粉絲範圍、最多客戶數）
+3. **互動優化** — ✅ 載入狀態、成功/錯誤提示、確認對話框
 
 ### Phase 2: OpenClaw 整合（預計 3-5 天）
 1. **Instagram 登入流程**
@@ -134,12 +125,12 @@
 
 ### 立即可做（今天）
 1. ✅ 完成 Supabase Storage bucket 設定
-2. 測試 Dashboard 所有頁面是否正常顯示
-3. 測試 API endpoints（Postman/Thunder Client）
+2. ✅ 測試 Dashboard 所有頁面
+3. ✅ 測試 API endpoints
 
 ### 本週目標
-1. 建立 DM 編輯 UI（使用者上傳／貼上文案）
-2. 建立搜尋任務建立表單
+1. ✅ 建立 DM 編輯 UI（使用者上傳／貼上文案）
+2. ✅ 建立搜尋任務建立表單
 3. 開始 OpenClaw Instagram 登入整合
 
 ### 本月目標
