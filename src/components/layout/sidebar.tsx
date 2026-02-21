@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Search,
   Users,
+  LayoutGrid,
   MessageSquare,
   BarChart3,
   Settings,
@@ -17,6 +18,7 @@ const navigation = [
   { name: '儀表板', href: '/', icon: LayoutDashboard },
   { name: '搜尋任務', href: '/campaigns', icon: Search },
   { name: '潛在客戶', href: '/leads', icon: Users },
+  { name: '看板', href: '/leads/board', icon: LayoutGrid },
   { name: '回應追蹤', href: '/responses', icon: MessageSquare },
   { name: '報表分析', href: '/analytics', icon: BarChart3 },
   { name: '系統設定', href: '/settings', icon: Settings },
@@ -27,14 +29,14 @@ export function Sidebar() {
 
   return (
     <div className="flex h-full w-64 flex-col border-r bg-card">
-      {/* Logo */}
-      <div className="flex h-16 items-center border-b px-6">
+      {/* Logo - 點擊回主頁 */}
+      <Link href="/" className="flex h-16 items-center border-b px-6 hover:opacity-90 transition-opacity">
         <Instagram className="h-6 w-6 text-purple-600 mr-2" />
         <div>
           <h1 className="text-lg font-bold">龍蝦配</h1>
           <p className="text-xs text-muted-foreground">ClawMatch</p>
         </div>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">

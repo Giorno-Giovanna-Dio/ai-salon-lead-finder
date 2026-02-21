@@ -7,11 +7,12 @@ const VALID_STYLES = ['PROFESSIONAL', 'FRIENDLY', 'VALUE_FOCUSED'] as const;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const lead = await db.lead.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!lead) {

@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
-import { Instagram, Key, Database, Bell } from 'lucide-react';
+import { formatDateTime } from '@/lib/utils';
+import { Instagram, Key, Database, Bell, Globe } from 'lucide-react';
+import { isOpenClawAvailable, getOpenClawMode, OPENCLAW_PROJECT_ROOT } from '@/lib/openclaw-adapter';
 
 export default async function SettingsPage() {
   const accounts = await db.instagramAccount.findMany({
@@ -27,6 +29,38 @@ export default async function SettingsPage() {
         <p className="text-muted-foreground mt-2">
           管理 Instagram 帳號、API 設定和系統參數
         </p>
+      </div>
+
+      {/* OpenClaw 整合狀態 */}
+      <div className="rounded-lg border bg-card p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Globe className="h-6 w-6 text-blue-600" />
+          <h2 className="text-xl font-semibold">OpenClaw 整合</h2>
+        </div>
+        {isOpenClawAvailable() ? (
+          <div className="space-y-2 text-sm">
+            <p className="flex items-center gap-2 text-green-600">
+              <span className="h-2 w-2 rounded-full bg-green-600" />
+              {getOpenClawMode() === 'worker' ? '已連線 Crawler Worker（生產環境）' : '本地 OpenClaw 可用'}
+            </p>
+            {getOpenClawMode() === 'local' && OPENCLAW_PROJECT_ROOT && (
+              <p className="text-muted-foreground">
+                專案路徑：<code className="rounded bg-muted px-1">{OPENCLAW_PROJECT_ROOT}</code>
+              </p>
+            )}
+            <p className="text-muted-foreground mt-2">
+              Instagram 登入：請在 OpenClaw 專案中使用 <code className="rounded bg-muted px-1">browser-profile profile-1</code> ～ <code className="rounded bg-muted px-1">profile-4</code> 依序登入 4 個帳號，登入完成後於下方「Instagram 帳號管理」標記已登入。
+            </p>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">
+            <p className="mb-2">未偵測到 OpenClaw。若要使用 Hashtag 搜尋與實際發送 DM，請：</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>設定環境變數 <code className="rounded bg-muted px-1">OPENCLAW_PROJECT_ROOT</code> 指向已安裝 openclaw 的專案路徑，或</li>
+              <li>設定 <code className="rounded bg-muted px-1">CRAWLER_API_URL</code> 連線至 Crawler Worker（生產環境）</li>
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Instagram Accounts */}

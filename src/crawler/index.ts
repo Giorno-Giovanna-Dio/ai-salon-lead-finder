@@ -36,15 +36,15 @@ const CONFIG = {
   serviceDescription: "我們提供美容美髮業專用的線上預約系統，讓顧客可以 24 小時線上預約",
 };
 
-// Project root for CLI commands
-const PROJECT_ROOT = "/Users/davidchung/Desktop/coding_projects/clawdbot_hair_domain";
+// Project root for CLI commands（可透過環境變數 OPENCLAW_PROJECT_ROOT 覆寫）
+const PROJECT_ROOT = process.env.OPENCLAW_PROJECT_ROOT || "/Users/davidchung/Desktop/coding_projects/clawdbot_hair_domain";
 
 /**
  * Execute OpenClaw browser command
  */
 function browserCmd(cmd: string, timeout = 30000): string {
   try {
-    const fullCmd = `cd ${PROJECT_ROOT} && pnpm openclaw browser --browser-profile openclaw ${cmd}`;
+    const fullCmd = `cd "${PROJECT_ROOT}" && pnpm openclaw browser --browser-profile openclaw ${cmd}`;
     log("dim", `  $ ${cmd}`);
     const result = execSync(fullCmd, {
       timeout,

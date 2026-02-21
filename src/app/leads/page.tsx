@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import Link from 'next/link';
-import { ExternalLink, Star } from 'lucide-react';
+import { ExternalLink, Star, LayoutGrid } from 'lucide-react';
 import { formatNumber, formatDateTime } from '@/lib/utils';
 
 export default async function LeadsPage() {
@@ -34,6 +34,13 @@ export default async function LeadsPage() {
             AI 分析的客戶列表 · 共 {leads.length} 位
           </p>
         </div>
+        <Link
+          href="/leads/board"
+          className="inline-flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+        >
+          <LayoutGrid className="h-4 w-4" />
+          看板檢視
+        </Link>
       </div>
 
       {leads.length === 0 ? (

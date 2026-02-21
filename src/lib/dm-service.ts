@@ -198,13 +198,31 @@ ${campaignContext ? `- 活動背景: ${campaignContext}` : ''}
       throw new Error('DM message not found');
     }
 
-    // 取得可用帳號
     const account = await this.accountManager.getAvailableAccount();
     if (!account) {
       throw new Error('No available Instagram account. All accounts are cooling down or reached daily limit.');
     }
 
-    // 更新 DM 狀態
+    const { isOpenClawAvailable } = await import('./openclaw-adapter');
+    const { sendInstagramDm } = await import('./openclaw-dm');
+
+    if (isOpenClawAvailable()) {
+      try {
+        await sendInstagramDm(
+          account.browserProfile,
+          dm.lead.username,
+          dm.content
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        await db.dmMessage.update({
+          where: { id: dmMessageId },
+          data: { status: 'FAILED', failureReason: msg },
+        });
+        throw err;
+      }
+    }
+
     await db.dmMessage.update({
       where: { id: dmMessageId },
       data: {
@@ -214,16 +232,13 @@ ${campaignContext ? `- 活動背景: ${campaignContext}` : ''}
       },
     });
 
-    // 更新 Lead 狀態
     await db.lead.update({
       where: { id: dm.leadId },
       data: { status: 'DM_SENT' },
     });
 
-    // 標記帳號已使用
     await this.accountManager.markAccountUsed(account.id);
 
-    // 記錄活動日誌
     await db.activityLog.create({
       data: {
         action: 'DM_SENT',
@@ -235,9 +250,6 @@ ${campaignContext ? `- 活動背景: ${campaignContext}` : ''}
         },
       },
     });
-
-    // TODO: 呼叫 OpenClaw 實際發送 DM
-    // await this.sendViaOpenClaw(account, dm);
 
     return true;
   }

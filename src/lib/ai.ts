@@ -182,4 +182,46 @@ export function getAIService(): AIService {
   return aiServiceInstance;
 }
 
+/** DM 回覆情感分類結果 */
+export type ResponseSentiment = 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'NEEDS_REVIEW';
+
+export interface ClassifyResponseResult {
+  sentiment: ResponseSentiment;
+  isPositive: boolean;
+}
+
+/**
+ * 對客戶回覆內容做情感/意圖分類（用於 inbox 回應）
+ */
+export async function classifyResponseSentiment(messageContent: string): Promise<ClassifyResponseResult> {
+  const ai = getAIService();
+  const prompt = `以下是一則 Instagram DM 中客戶回覆我們的訊息內容，請判斷情感與是否有興趣。
+
+訊息內容：
+"""
+${messageContent.slice(0, 1000)}
+"""
+
+請回傳 JSON（只回傳 JSON，不要其他文字）：
+{
+  "sentiment": "POSITIVE" | "NEUTRAL" | "NEGATIVE" | "NEEDS_REVIEW",
+  "isPositive": boolean
+}
+
+說明：sentiment 為 POSITIVE=正面/有興趣，NEUTRAL=中立，NEGATIVE=明確拒絕或負面，NEEDS_REVIEW=無法判斷或需人工看。isPositive 為是否判斷為「有興趣/可跟進」的潛在客戶。`;
+
+  try {
+    const result = await ai.generateJSON<ClassifyResponseResult>(prompt, {
+      systemPrompt: 'You are a B2B sales assistant. Respond with valid JSON only.',
+      temperature: 0.3,
+    });
+    return {
+      sentiment: result.sentiment ?? 'NEEDS_REVIEW',
+      isPositive: Boolean(result.isPositive),
+    };
+  } catch {
+    return { sentiment: 'NEEDS_REVIEW', isPositive: false };
+  }
+}
+
 export default AIService;

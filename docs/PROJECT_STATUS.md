@@ -22,23 +22,15 @@
 - ✅ 系統設定頁
 - ⏳ 多圖片上傳（最多 10 張）— 即將支援
 
-### 3. 核心服務 (85%)
+### 3. 核心服務 (90%)
 - ✅ AI 服務 (`src/lib/ai.ts`)
-  - Gemini API 整合
-  - OpenAI fallback
-  - JSON 生成支援
 - ✅ 帳號管理 (`src/lib/account-manager.ts`)
-  - 4 帳號輪換邏輯
-  - 6 小時間隔管理
-  - 每日限制追蹤
 - ✅ DM 發送服務 (`src/lib/dm-service.ts`)
-  - 使用者上傳／貼上自己的文案（不需 AI 生成）
-  - 圖片上傳到 Supabase Storage
-  - 批次發送功能
 - ✅ Instagram Crawler (`src/crawler/instagram-crawler.ts`)
-  - AI 個人資料分析
-  - Lead 創建邏輯
-  - ⏳ OpenClaw 整合（待實作）
+  - AI 個人資料分析、Lead 創建邏輯
+  - ✅ OpenClaw Hashtag 搜尋整合（`OPENCLAW_PROJECT_ROOT` 設定時執行真實搜尋）
+- ✅ OpenClaw 介面層 (`src/lib/openclaw-adapter.ts`)、Hashtag 搜尋 (`src/lib/openclaw-hashtag-search.ts`)
+  - ⏳ 實際 DM 發送與回應檢查待接（見 docs/PHASE2_OPENCLAW.md）
 
 ### 4. API Endpoints (100%)
 - ✅ `POST /api/campaigns` - 建立搜尋任務
@@ -63,26 +55,11 @@
 2. **搜尋任務建立表單** — ✅ /campaigns/new（名稱、Hashtags、粉絲範圍、最多客戶數）
 3. **互動優化** — ✅ 載入狀態、成功/錯誤提示、確認對話框
 
-### Phase 2: OpenClaw 整合（預計 3-5 天）
-1. **Instagram 登入流程**
-   - 4 個帳號登入管理
-   - Browser profile 設定
-   - Cookie 持久化
-
-2. **Hashtag 搜尋**
-   - 搜尋結果爬取
-   - 粉絲數篩選
-   - 個人資料提取
-
-3. **DM 發送**
-   - 文字訊息發送
-   - 圖片上傳與發送
-   - 發送確認
-
-4. **回應檢查**
-   - DM inbox 爬取
-   - 新訊息檢測
-   - 自動分類（正面/負面/待審查）
+### Phase 2: OpenClaw 整合 — 進行中
+1. **Instagram 登入流程** — ✅ 系統設定頁顯示 OpenClaw 狀態與登入說明；4 帳號以 browser-profile profile-1～4 在 OpenClaw 專案中登入
+2. **Hashtag 搜尋** — ✅ OpenClaw adapter + runHashtagSearchForCampaign；執行任務時若 OPENCLAW_PROJECT_ROOT 已設定會跑真實搜尋並寫入 Lead
+3. **DM 發送** — ⏳ DB 狀態更新已完成；實際透過 OpenClaw 送 IG DM 待接（見 docs/PHASE2_OPENCLAW.md）
+4. **回應檢查** — ⏳ DM inbox 爬取與 AI 分類待實作
 
 ### Phase 3: Cron Job & 自動化（預計 2-3 天）
 1. **搜尋任務排程**

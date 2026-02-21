@@ -7,10 +7,11 @@ import { DmSection } from '@/components/leads/dm-section';
 export default async function LeadDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const lead = await db.lead.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       campaign: true,
       dmMessages: {

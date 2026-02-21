@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { Users, Send, MessageCircle, TrendingUp, Search } from 'lucide-react';
+import { Users, Send, MessageCircle, TrendingUp, Search, LayoutGrid } from 'lucide-react';
 
 async function getStats() {
   const [
@@ -126,7 +126,7 @@ export default async function Home() {
       {/* Quick Actions */}
       <div className="rounded-lg border bg-card p-6">
         <h2 className="text-xl font-semibold mb-4">快速開始</h2>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <a
             href="/campaigns/new"
             className="flex items-center gap-3 rounded-lg border p-4 hover:bg-muted transition-colors"
@@ -148,6 +148,18 @@ export default async function Home() {
               <p className="font-semibold">查看潛在客戶</p>
               <p className="text-sm text-muted-foreground">
                 瀏覽 AI 分析的客戶列表
+              </p>
+            </div>
+          </a>
+          <a
+            href="/leads/board"
+            className="flex items-center gap-3 rounded-lg border p-4 hover:bg-muted transition-colors"
+          >
+            <LayoutGrid className="h-8 w-8 text-purple-600" />
+            <div>
+              <p className="font-semibold">潛在客戶看板</p>
+              <p className="text-sm text-muted-foreground">
+                拖曳卡片管理狀態，掌握進度
               </p>
             </div>
           </a>

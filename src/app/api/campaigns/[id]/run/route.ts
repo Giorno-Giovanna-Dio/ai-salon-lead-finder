@@ -3,11 +3,12 @@ import { getCrawler } from '@/crawler/instagram-crawler';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const crawler = getCrawler();
-    const result = await crawler.runCampaign(params.id);
+    const result = await crawler.runCampaign(id);
 
     return NextResponse.json({
       success: true,

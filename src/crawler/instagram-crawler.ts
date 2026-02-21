@@ -1,5 +1,8 @@
+import { spawnSync } from 'child_process';
+import path from 'path';
 import { db } from '../lib/db';
 import { getAIService } from '../lib/ai';
+import { isOpenClawAvailable, getOpenClawProjectRoot } from '../lib/openclaw-adapter';
 import { Campaign } from '@prisma/client';
 
 export interface InstagramProfile {
@@ -53,15 +56,6 @@ export class InstagramCrawler {
         throw new Error('Campaign is not active');
       }
 
-      // TODO: 使用 OpenClaw 搜尋 Instagram
-      // const profiles = await this.searchInstagram(campaign);
-      
-      // 暫時模擬資料用於測試
-      console.log(`Starting campaign: ${campaign.name}`);
-      console.log(`Searching hashtags: ${campaign.hashtags.join(', ')}`);
-      console.log(`Follower range: ${campaign.minFollowers} - ${campaign.maxFollowers}`);
-
-      // 更新活動日誌
       await db.activityLog.create({
         data: {
           action: 'CAMPAIGN_STARTED',
@@ -73,7 +67,44 @@ export class InstagramCrawler {
         },
       });
 
-      result.profilesFound = 0; // OpenClaw 會回傳實際數字
+      if (isOpenClawAvailable()) {
+        const scriptPath = path.join(process.cwd(), 'src', 'crawler', 'run-campaign-openclaw.ts');
+        console.log(`[OpenClaw] 開始執行 run-campaign-openclaw.ts (campaignId: ${campaignId})，輸出如下…`);
+        const child = spawnSync(
+          'npx',
+          ['tsx', scriptPath, campaignId],
+          {
+            env: { ...process.env },
+            stdio: 'inherit',
+            timeout: 10 * 60 * 1000,
+          }
+        );
+        if (child.status === 0) {
+          const logs = await db.activityLog.findMany({
+            where: { action: 'CAMPAIGN_COMPLETED' },
+            orderBy: { timestamp: 'desc' },
+            take: 10,
+          });
+          const completed = logs.find(
+            (log) => (log.metadata as { campaignId?: string })?.campaignId === campaignId
+          );
+          const meta = completed?.metadata as { profilesFound?: number; leadsCreated?: number } | undefined;
+          if (meta) {
+            result.profilesFound = meta.profilesFound ?? 0;
+            result.leadsCreated = meta.leadsCreated ?? 0;
+            result.profilesAnalyzed = result.profilesFound;
+          }
+        } else {
+          result.errors.push(child.error?.message || 'OpenClaw 腳本執行失敗');
+        }
+      } else {
+        const fs = require('fs');
+        const root = getOpenClawProjectRoot();
+        const exists = root ? fs.existsSync(root) : false;
+        console.log(`Starting campaign: ${campaign.name} (OpenClaw 未啟用，僅記錄日誌)`);
+        console.log(`  OPENCLAW_PROJECT_ROOT=${process.env.OPENCLAW_PROJECT_ROOT || '(未設定)'}`);
+        console.log(`  解析路徑: ${root || '(空)'}，存在: ${exists} (若為 false 請檢查 .env 路徑與拼字，例如 clawdbot 不是 clawbot)`);
+      }
       
     } catch (error: any) {
       result.errors.push(error.message);
@@ -133,20 +164,20 @@ export class InstagramCrawler {
         return null;
       }
 
-      // 創建 Lead
+      // 創建 Lead（Lead 模型無 isBusinessAccount 欄位；上方已檢查 existing）
       const lead = await db.lead.create({
         data: {
           campaignId,
           username: profile.username,
-          fullName: profile.fullName,
+          fullName: profile.fullName || profile.username,
           biography: profile.biography,
           profileUrl: `https://instagram.com/${profile.username}`,
           followersCount: profile.followersCount,
           postsCount: profile.postsCount,
-          isBusinessAccount: profile.isBusinessAccount,
-          contactMethods: profile.contactMethods,
+          contactMethods: profile.contactMethods ?? {},
           score: analysis.score,
           reasons: analysis.reasons,
+          isLikelyOwner: analysis.score >= 7,
           status: 'DISCOVERED',
         },
       });
@@ -214,12 +245,19 @@ export class InstagramCrawler {
 - 不要編造不存在的資訊
 - 如果資訊不足，保守評分`;
 
-    const result = await this.ai.generateJSON<{
-      score: number;
-      reasons: string[];
-    }>(prompt);
-
-    return result;
+    try {
+      const result = await this.ai.generateJSON<{
+        score: number;
+        reasons: string[];
+      }>(prompt);
+      return result;
+    } catch (e) {
+      console.warn(`AI 分析 @${profile.username} 無效 JSON，使用 fallback`);
+      return {
+        score: 5,
+        reasons: ['AI 回應格式異常，保守略過'],
+      };
+    }
   }
 
   /**

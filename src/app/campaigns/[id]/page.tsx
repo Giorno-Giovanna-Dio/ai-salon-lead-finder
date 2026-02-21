@@ -1,17 +1,19 @@
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Play } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 import { RunCampaignButton } from '@/components/campaigns/run-campaign-button';
+import { OpenClawDemoPanel } from '@/components/campaigns/openclaw-demo-panel';
 
 export default async function CampaignDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const campaign = await db.campaign.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { _count: { select: { leads: true } } },
   });
 
@@ -67,6 +69,12 @@ export default async function CampaignDetailPage({
         </dl>
 
         <RunCampaignButton campaignId={campaign.id} />
+
+        <p className="text-sm text-muted-foreground pt-2 border-t">
+          下一步：前往「<Link href="/leads" className="text-primary hover:underline">潛在客戶</Link>」列表，點選對象進入詳情頁即可撰寫並發送 DM。
+        </p>
+
+        <OpenClawDemoPanel campaignId={campaign.id} />
       </div>
     </div>
   );
