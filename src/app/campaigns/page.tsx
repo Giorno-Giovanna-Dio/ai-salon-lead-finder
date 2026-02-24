@@ -1,7 +1,8 @@
 import { db } from '@/lib/db';
 import Link from 'next/link';
-import { Plus, Play, Pause } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
+import { DeleteCampaignButton } from '@/components/campaigns/delete-campaign-button';
 
 export default async function CampaignsPage() {
   const campaigns = await db.campaign.findMany({
@@ -60,16 +61,23 @@ export default async function CampaignsPage() {
                     {formatDateTime(campaign.createdAt)}
                   </p>
                 </div>
-                <span
-                  className={cn(
-                    'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
-                    campaign.isActive
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                  )}
-                >
-                  {campaign.isActive ? '執行中' : '已暫停'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                      campaign.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                    )}
+                  >
+                    {campaign.isActive ? '執行中' : '已暫停'}
+                  </span>
+                  <DeleteCampaignButton
+                    campaignId={campaign.id}
+                    campaignName={campaign.name}
+                    variant="icon"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2 mb-4">

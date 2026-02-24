@@ -7,8 +7,15 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    let textOnly = false;
+    try {
+      const body = await request.json().catch(() => ({}));
+      textOnly = body?.textOnly === true;
+    } catch {
+      // ignore
+    }
     const dmService = getDmService();
-    const success = await dmService.sendDm(id);
+    const success = await dmService.sendDm(id, { textOnly });
 
     return NextResponse.json({
       success: true,

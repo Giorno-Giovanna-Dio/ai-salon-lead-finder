@@ -95,63 +95,105 @@ ${campaignContext ? `- 活動背景: ${campaignContext}` : ''}
 
   /**
    * 依使用者上傳的文案建立一則 DM（不呼叫 AI）
+   * @param images 可選，File[] 會上傳到 Supabase Storage 並關聯到 DM
+   * @param imageUrls 可選，既有圖片的公開 URL（例如從範本帶入），直接寫入 DmMessage.imageUrls，不建立 DmImage
    */
   async createDmFromUserContent(
     leadId: string,
     content: string,
-    style?: DmStyle
+    style?: DmStyle,
+    images?: File[],
+    imageUrls?: string[]
   ): Promise<string> {
     if (!content?.trim()) {
       throw new Error('Content is required');
     }
+    const urls = Array.isArray(imageUrls) ? imageUrls.filter((u) => typeof u === 'string' && u) : [];
     const dm = await db.dmMessage.create({
       data: {
         leadId,
         content: content.trim(),
         style: style ?? null,
         status: 'USER_EDITED',
+        imageUrls: urls,
       },
     });
+    if (images && images.length > 0) {
+      const uploaded = await this.uploadImages(dm.id, images);
+      const newUrls = uploaded.sort((a, b) => a.order - b.order).map((x) => x.url);
+      if (urls.length > 0) {
+        await db.dmMessage.update({
+          where: { id: dm.id },
+          data: { imageUrls: [...urls, ...newUrls] },
+        });
+      }
+    }
     return dm.id;
   }
 
   /**
-   * 上傳圖片到 Supabase Storage
+   * 上傳圖片到 Supabase Storage 並建立 DmImage 記錄
    */
   async uploadImages(
     dmMessageId: string,
     images: File[]
   ): Promise<{ url: string; order: number }[]> {
     const uploadedImages: { url: string; order: number }[] = [];
+    const MAX_IMAGES = 10;
+    const MAX_SIZE_MB = 5;
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    if (images.length > MAX_IMAGES) {
+      throw new Error(`最多上傳 ${MAX_IMAGES} 張圖片`);
+    }
 
     for (let i = 0; i < images.length; i++) {
       const file = images[i];
-      const fileName = `${dmMessageId}/${i + 1}-${Date.now()}-${file.name}`;
+      if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+        throw new Error(`圖片 ${file.name} 超過 ${MAX_SIZE_MB}MB 限制`);
+      }
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        throw new Error(`不支援的格式：${file.name}（請上傳 JPG/PNG/GIF/WebP）`);
+      }
 
-      const { data, error } = await supabaseAdmin.storage
+      const storagePath = `${dmMessageId}/${i + 1}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+
+      const { error } = await supabaseAdmin.storage
         .from('dm-images')
-        .upload(fileName, file, {
+        .upload(storagePath, file, {
           cacheControl: '3600',
           upsert: false,
         });
 
       if (error) {
-        throw new Error(`Failed to upload image ${i + 1}: ${error.message}`);
+        throw new Error(`上傳圖片失敗 (${i + 1}/${images.length}): ${error.message}`);
       }
 
       const { data: { publicUrl } } = supabaseAdmin.storage
         .from('dm-images')
-        .getPublicUrl(fileName);
+        .getPublicUrl(storagePath);
 
       await db.dmImage.create({
         data: {
-          dmMessageId,
-          imageUrl: publicUrl,
-          order: i + 1,
+          messageId: dmMessageId,
+          storagePath,
+          publicUrl,
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type || 'image/jpeg',
         },
       });
 
       uploadedImages.push({ url: publicUrl, order: i + 1 });
+    }
+
+    // 同步更新 DmMessage.imageUrls（供顯示與發送使用）
+    if (uploadedImages.length > 0) {
+      const urls = uploadedImages.sort((a, b) => a.order - b.order).map((x) => x.url);
+      await db.dmMessage.update({
+        where: { id: dmMessageId },
+        data: { imageUrls: urls },
+      });
     }
 
     return uploadedImages;
@@ -182,10 +224,9 @@ ${campaignContext ? `- 活動背景: ${campaignContext}` : ''}
 
   /**
    * 發送 DM
-   * 注意：實際的 Instagram 發送需要 OpenClaw 整合
-   * 這裡先標記為已發送，實際發送邏輯在 crawler 中
+   * @param options.textOnly 若為 true，僅傳文字不帶圖（適用附圖 DM 傳送失敗時改為僅傳文字再試）
    */
-  async sendDm(dmMessageId: string): Promise<boolean> {
+  async sendDm(dmMessageId: string, options?: { textOnly?: boolean }): Promise<boolean> {
     const dm = await db.dmMessage.findUnique({
       where: { id: dmMessageId },
       include: {
@@ -207,12 +248,35 @@ ${campaignContext ? `- 活動背景: ${campaignContext}` : ''}
     const { sendInstagramDm } = await import('./openclaw-dm');
 
     if (isOpenClawAvailable()) {
+      const imageUrls =
+        options?.textOnly
+          ? undefined
+          : dm.imageUrls?.length > 0
+            ? dm.imageUrls
+            : dm.images?.map((i) => i.publicUrl) ?? [];
+      const hasImages = (imageUrls?.length ?? 0) > 0;
       try {
-        await sendInstagramDm(
+        const result = await sendInstagramDm(
           account.browserProfile,
           dm.lead.username,
-          dm.content
+          dm.content,
+          imageUrls && imageUrls.length > 0 ? imageUrls : undefined
         );
+
+        if (hasImages && !result.imagePhaseSucceeded) {
+          await db.dmMessage.update({
+            where: { id: dmMessageId },
+            data: {
+              status: 'FAILED',
+              failureReason: '圖片未成功送出（圖+文為一則），請至 IG 確認或改為僅傳文字',
+            },
+          });
+          throw new Error('圖片未成功送出，請至 IG 確認或改為僅傳文字');
+        }
+        // 有附圖且流程跑完：標為已送出並回成功（請至 IG 確認是否收到圖片）
+        if (hasImages) {
+          // 不 throw，讓下面統一更新為 SENT 並回 200
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         await db.dmMessage.update({

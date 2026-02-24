@@ -194,6 +194,7 @@ model DmTemplate {
   content     String   @db.Text
   style       DmStyle
   category    String   @default("general") // 產品推廣/合作邀約/跟進等
+  imageUrls   String[] @default([]) // 範本附圖的 Supabase 公開 URL，選範本時一併帶入
   usageCount  Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 import { RunCampaignButton } from '@/components/campaigns/run-campaign-button';
+import { DeleteCampaignButton } from '@/components/campaigns/delete-campaign-button';
 import { OpenClawDemoPanel } from '@/components/campaigns/openclaw-demo-panel';
 
 export default async function CampaignDetailPage({
@@ -68,7 +69,10 @@ export default async function CampaignDetailPage({
           </div>
         </dl>
 
-        <RunCampaignButton campaignId={campaign.id} />
+        <div className="flex flex-wrap gap-2">
+          <RunCampaignButton campaignId={campaign.id} />
+          <DeleteCampaignButton campaignId={campaign.id} campaignName={campaign.name} />
+        </div>
 
         <p className="text-sm text-muted-foreground pt-2 border-t">
           下一步：前往「<Link href="/leads" className="text-primary hover:underline">潛在客戶</Link>」列表，點選對象進入詳情頁即可撰寫並發送 DM。

@@ -22,9 +22,33 @@ export async function POST(
       );
     }
 
-    const body = await request.json().catch(() => ({}));
-    const content = typeof body.content === 'string' ? body.content : '';
-    const styleInput = body.style;
+    let content = '';
+    let styleInput: string | undefined;
+    let imageFiles: File[] = [];
+    let imageUrls: string[] = [];
+
+    const contentType = request.headers.get('content-type') || '';
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      content = (formData.get('content') as string) || '';
+      styleInput = formData.get('style') as string | undefined;
+      const files = formData.getAll('images') as File[];
+      imageFiles = files.filter((f) => f && f.size > 0 && f.type.startsWith('image/'));
+      const urlsRaw = formData.get('imageUrls');
+      if (typeof urlsRaw === 'string') {
+        try {
+          const parsed = JSON.parse(urlsRaw) as unknown;
+          imageUrls = Array.isArray(parsed) ? parsed.filter((u): u is string => typeof u === 'string') : [];
+        } catch {
+          /* ignore */
+        }
+      }
+    } else {
+      const body = await request.json().catch(() => ({}));
+      content = typeof body.content === 'string' ? body.content : '';
+      styleInput = body.style;
+      if (Array.isArray(body.imageUrls)) imageUrls = body.imageUrls.filter((u): u is string => typeof u === 'string');
+    }
 
     const style: DmStyle | undefined =
       typeof styleInput === 'string' && VALID_STYLES.includes(styleInput as DmStyle)
@@ -32,7 +56,13 @@ export async function POST(
         : undefined;
 
     const dmService = getDmService();
-    const dmId = await dmService.createDmFromUserContent(lead.id, content, style);
+    const dmId = await dmService.createDmFromUserContent(
+      lead.id,
+      content,
+      style,
+      imageFiles.length > 0 ? imageFiles : undefined,
+      imageUrls.length > 0 ? imageUrls : undefined
+    );
 
     await db.lead.update({
       where: { id: lead.id },

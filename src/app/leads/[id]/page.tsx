@@ -172,6 +172,11 @@ export default async function LeadDetailPage({
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {dm.content.length > 100 ? `${dm.content.substring(0, 100)}...` : dm.content}
                       </p>
+                      {dm.status === 'FAILED' && dm.failureReason && (
+                        <pre className="mt-2 text-xs text-destructive whitespace-pre-wrap break-words max-h-32 overflow-y-auto rounded bg-destructive/5 p-2">
+                          {dm.failureReason.length > 2000 ? dm.failureReason.slice(0, 2000) + '\n...' : dm.failureReason}
+                        </pre>
+                      )}
                       {dm.images.length > 0 && (
                         <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
                           <ImageIcon className="h-3 w-3" />
