@@ -49,7 +49,8 @@ coverage/
 *.zip
 .cache/
 
-# Documentation (not for upload)
+# Documentation (confidential — do not track or push)
+docs/
 docs-for-comp-no-upload-to-github/
 
 # Prisma
